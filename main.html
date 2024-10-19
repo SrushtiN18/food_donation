@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Donation App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            text-align: center;
+            margin: 0;
+        }
+
+        nav ul li {
+            display: inline-block;
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border-radius: 5px;
+        }
+
+        nav ul li a.active {
+            background-color: #45a049;
+        }
+
+        section {
+            display: none; /* Hide sections by default */
+            margin: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        section.active {
+            display: block; /* Show active section */
+        }
+
+        form label, form input, form button {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+        }
+
+        form input {
+            width: 100%;
+            padding: 8px;
+        }
+
+        form button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 12px 20px;
+            font-size: 16px;
+        }
+
+        form button:hover {
+            background-color: #45a049;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #333;
+            color: white;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+
+        #historyList {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        #historyList li {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-left: 4px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Food Donation App</h1>
+        <nav>
+            <ul>
+                <li><a id="profileTab" class="active">Profile</a></li>
+                <li><a id="donateTab" class="disabled" onclick="alert('Please complete your profile first.')">Donate</a></li>
+                <li><a id="historyTab" class="disabled" onclick="alert('Please complete your donation first.')">Donation History</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Profile Section -->
+    <section id="profileSection" class="active">
+        <h2>Profile</h2>
+        <form id="profileForm">
+            <label for="userName">Name:</label>
+            <input type="text" id="userName" name="userName" required>
+
+            <label for="userEmail">Email:</label>
+            <input type="email" id="userEmail" name="userEmail" required>
+
+            <button type="submit">Update Profile</button>
+        </form>
+    </section>
+
+    <!-- Donate Section -->
+    <section id="donateSection">
+        <h2>Donate Food</h2>
+        <form id="donateForm">
+            <label for="foodItem">Food Item:</label>
+            <input type="text" id="foodItem" name="foodItem" required>
+
+            <label for="quantity">Quantity (in kg):</label>
+            <input type="number" id="quantity" name="quantity" required min="0">
+
+            <label for="location">Pickup Location:</label>
+            <input type="text" id="location" name="location" required>
+
+            <button type="submit">Submit Donation</button>
+        </form>
+    </section>
+
+    <!-- Donation History Section -->
+    <section id="historySection">
+        <h2>Donation History</h2>
+        <ul id="historyList"></ul>
+    </section>
+
+    <footer>
+        <p>Food Donation App © 2024</p>
+    </footer>
+
+    <script>
+        // Profile Form Handler
+        document.getElementById('profileForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const userName = document.getElementById('userName').value;
+            const userEmail = document.getElementById('userEmail').value;
+
+            localStorage.setItem('profileName', userName);
+            localStorage.setItem('profileEmail', userEmail);
+
+            alert(`Profile updated: ${userName} (${userEmail})`);
+
+            // Enable the donation tab and show the donation section
+            document.getElementById('donateTab').classList.remove('disabled');
+            document.getElementById('donateTab').onclick = showDonationSection;
+            showSection(donateTab, donateSection);
+        });
+
+        // Donation Form Handler
+        document.getElementById('donateForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const foodItem = document.getElementById('foodItem').value;
+            const quantity = document.getElementById('quantity').value;
+            const location = document.getElementById('location').value;
+
+            // Store donation history in localStorage
+            const historyList = JSON.parse(localStorage.getItem('donationHistory')) || [];
+            historyList.push({
+                foodItem: foodItem,
+                quantity: quantity,
+                location: location
+            });
+            localStorage.setItem('donationHistory', JSON.stringify(historyList));
+
+            // Display alert for successful donation
+            alert(`Thank you for donating ${quantity}kg of ${foodItem}. Pickup from: ${location}`);
+
+            // Enable the history tab and show the donation history section
+            document.getElementById('historyTab').classList.remove('disabled');
+            document.getElementById('historyTab').onclick = showHistorySection;
+
+            // Update donation history on the page
+            updateHistory();
+            showSection(historyTab, historySection);
+        });
+
+        // Function to update Donation History
+        function updateHistory() {
+            const historyList = JSON.parse(localStorage.getItem('donationHistory')) || [];
+            const historyListElement = document.getElementById('historyList');
+            historyListElement.innerHTML = '';
+
+            historyList.forEach((donation, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `Donation #${index + 1}: ${donation.quantity}kg of ${donation.foodItem} from ${donation.location}`;
+                historyListElement.appendChild(listItem);
+            });
+        }
+
+        // Load Donation History on Page Load
+        document.addEventListener('DOMContentLoaded', updateHistory);
+
+        // Tab switching logic
+        const profileTab = document.getElementById('profileTab');
+        const donateTab = document.getElementById('donateTab');
+        const historyTab = document.getElementById('historyTab');
+
+        const profileSection = document.getElementById('profileSection');
+        const donateSection = document.getElementById('donateSection');
+        const historySection = document.getElementById('historySection');
+
+        profileTab.addEventListener('click', () => {
+            showSection(profileTab, profileSection);
+        });
+
+        // Function to show the donation section
+        function showDonationSection() {
+            showSection(donateTab, donateSection);
+        }
+
+        // Function to show the donation history section
+        function showHistorySection() {
+            showSection(historyTab, historySection);
+        }
+
+        // Function to show the selected section and hide others
+        function showSection(activeTab, activeSection) {
+            // Remove active class from all tabs and sections
+            document.querySelectorAll('nav ul li a').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('section').forEach(section => section.classList.remove('active'));
+
+            // Add active class to the clicked tab and section
+            activeTab.classList.add('active');
+            activeSection.classList.add('active');
+        }
+    </script>
+</body>
+</html>
